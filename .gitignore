@@ -1,9 +1,9 @@
 # Visual Studio 2015 user specific files
 .vs/
 
-Content/StarterContent/
-Content/InfinityBladeAdversaries/
-Content/InfinityBladeEffects/
+**/StarterContent
+**/InfinityBladeAdversaries
+**/InfinityBladeEffects
 
 
 # Compiled Object files
