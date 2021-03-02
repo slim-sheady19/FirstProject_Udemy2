@@ -64,7 +64,6 @@ void AItem::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* Oth
 	{
 		UGameplayStatics::PlaySound2D(this, OverlapSound);
 	}
-	Destroy(); //destroy object once picked up and after the particle system spawn
 }
 
 void AItem::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)

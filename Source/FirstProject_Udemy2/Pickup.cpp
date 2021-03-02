@@ -22,6 +22,8 @@ void APickup::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* O
 		{
 			Main->IncrementCoins(CoinCount);
 			Main->PickupLocations.Add(GetActorLocation()); // when casting in Main, add location of pickup in array PickupLocations
+
+			Destroy(); //destroy actor once picked up
 		}
 	}
 }
