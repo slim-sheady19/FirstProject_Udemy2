@@ -9,6 +9,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Weapon.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimInstance.h"
 
 // Sets default values
 AMain::AMain()
@@ -258,6 +260,10 @@ void AMain::LMBDown()
 			SetActiveOverlappingItem(nullptr);
 		}
 	}
+	else if (EquippedWeapon) //if LMB is down and we have a weapon equipped, it means we want to attack so call Attack function
+	{
+		Attack();
+	}
 }
 
 
@@ -333,4 +339,17 @@ void AMain::SetEquippedWeapon(AWeapon* WeaponToSet)
 	}
 
 	EquippedWeapon = WeaponToSet;
+}
+
+void AMain::Attack()
+{
+	bAttacking = true;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && CombatMontage) //is valid
+	{
+		//Play the Anim Instance's montage Combat Montage at 1.35x speed, and skip directly to Attack_1
+		AnimInstance->Montage_Play(CombatMontage, 1.35f);
+		AnimInstance->Montage_JumpToSection(FName("Attack_1"), CombatMontage);
+	}
 }
