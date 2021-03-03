@@ -144,13 +144,17 @@ public:
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Items")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Items)
 	class AWeapon* EquippedWeapon;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Items")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Items)
 	class AItem* ActiveOverlappingItem;
 
-	FORCEINLINE void SetEquippedWeapon(AWeapon* WeaponToSet) { EquippedWeapon = WeaponToSet; }
+	void SetEquippedWeapon(AWeapon* WeaponToSet);
+
+	UFUNCTION(BlueprintCallable)
+	AWeapon* GetEquippedWeapon() { return EquippedWeapon; }
+
 	FORCEINLINE void SetActiveOverlappingItem(AItem* Item) { ActiveOverlappingItem = Item; }
 
 };
