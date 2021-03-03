@@ -351,9 +351,24 @@ void AMain::Attack()
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance && CombatMontage) //is valid
 		{
-		//Play the Anim Instance's montage Combat Montage at 1.35x speed, and skip directly to Attack_1
-		AnimInstance->Montage_Play(CombatMontage, 1.35f);
-		AnimInstance->Montage_JumpToSection(FName("Attack_1"), CombatMontage);
+			int32 Section = FMath::RandRange(0, 1); //Randomize the attack animation played from Combat Montage using int32 variable called Section and switch statement
+			switch (Section)
+			{
+			case 0:
+				//Play the Anim Instance's montage Combat Montage at 2.2x speed, and skip directly to Attack_1
+				AnimInstance->Montage_Play(CombatMontage, 2.2f);
+				AnimInstance->Montage_JumpToSection(FName("Attack_1"), CombatMontage);
+				break;
+			case 1:
+				AnimInstance->Montage_Play(CombatMontage, 1.8f);
+				AnimInstance->Montage_JumpToSection(FName("Attack_2"), CombatMontage);
+				break;
+
+			default:
+				;
+			}
+
+		
 		}
 	}
 }
