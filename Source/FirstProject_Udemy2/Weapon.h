@@ -17,6 +17,9 @@ public:
 
 	AWeapon();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Sound")
+	class USoundCue* OnEquipSound;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SkeletalMesh")
 	class USkeletalMeshComponent* SkeletalMesh;
 

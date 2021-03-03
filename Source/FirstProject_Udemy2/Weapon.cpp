@@ -5,6 +5,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Main.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Sound/SoundCue.h"
+#include "Kismet/GameplayStatics.h"
 
 AWeapon::AWeapon()
 {
@@ -15,12 +17,15 @@ AWeapon::AWeapon()
 void AWeapon::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	Super::OnOverlapBegin(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult); 
-	if (OtherActor) //if Main Character collides with Weapon, cast to Main and Equip Weapon
+	
+	//if Main Character collides with Weapon, cast to Main and Equip Weapon
+	if (OtherActor) 
 	{
 		AMain* Main = Cast<AMain>(OtherActor); 
 		if (Main)
 		{
-			Equip(Main);
+			//Stop overlapping Item if we haven't equipped weapon
+			Main->SetActiveOverlappingItem(this);
 		}
 	}
 }
@@ -28,6 +33,14 @@ void AWeapon::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* O
 void AWeapon::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	Super::OnOverlapEnd(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
+	if (OtherActor) 
+	{
+		AMain* Main = Cast<AMain>(OtherActor);
+		if (Main)
+		{
+			Main->SetActiveOverlappingItem(nullptr);
+		}
+	}
 }
 
 void AWeapon::Equip(AMain* Char)
@@ -42,10 +55,12 @@ void AWeapon::Equip(AMain* Char)
 
 		//Create RightHandSocket variable for the weapon socket
 		const USkeletalMeshSocket* RightHandSocket = Char->GetMesh()->GetSocketByName("RightHandSocket");
-		if (RightHandSocket)
+		if (RightHandSocket) //check RightHandSocket is valid
 		{
-			RightHandSocket->AttachActor(this, Char->GetMesh());
+			RightHandSocket->AttachActor(this, Char->GetMesh()); //Attach to RightHand Socket
 			bRotate = false; //Stop rotating weapon (from BP) once equipped to Main
+			Char->SetEquippedWeapon(this);
 		}
+		if (OnEquipSound) UGameplayStatics::PlaySound2D(this, OnEquipSound);
 	}
 }

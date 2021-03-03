@@ -8,6 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Weapon.h"
 
 // Sets default values
 AMain::AMain()
@@ -56,6 +57,7 @@ AMain::AMain()
 	SprintingSpeed = 950.f;
 
 	bShiftKeyDown = false;
+	bLMBDown = false;
 
 	//Initialize enums
 	MovementStatus = EMovementStatus::EMS_Normal;
@@ -189,6 +191,9 @@ void AMain::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AMain::ShiftKeyDown);
 	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AMain::ShiftKeyUp);
 
+	PlayerInputComponent->BindAction("LMB", IE_Pressed, this, &AMain::LMBDown);
+	PlayerInputComponent->BindAction("LMB", IE_Released, this, &AMain::LMBUp);
+
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMain::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AMain::MoveRight);
 
@@ -238,6 +243,29 @@ void AMain::LookUpAtRate(float Rate)
 {
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
+
+//Use this function to check that the player wants to equip the new weapon
+void AMain::LMBDown()
+{
+	bLMBDown = true;
+
+	if (ActiveOverlappingItem)
+	{
+		AWeapon* Weapon = Cast<AWeapon>(ActiveOverlappingItem); //Cast in to AWeapon, pass in OverLappingItem
+		if (Weapon) //check weapon is valid
+		{
+			Weapon->Equip(this); //Call Equip inside Weapon
+			SetActiveOverlappingItem(nullptr);
+		}
+	}
+}
+
+
+void AMain::LMBUp()
+{
+	bLMBDown = false;
+}
+
 
 void AMain::DecrementHealth(float Amount)
 {
