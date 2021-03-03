@@ -161,6 +161,10 @@ public:
 	bool bAttacking;
 
 	void Attack();
+	
+	UFUNCTION(BlueprintCallable)
+	void AttackEnd();
+
 
 	//Create Anim Montage for this character
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
