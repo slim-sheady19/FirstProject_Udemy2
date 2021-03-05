@@ -56,11 +56,13 @@ void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AEnemy::AgroSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	//Check if it's an Other Actor
 	if (OtherActor)
 	{
 		AMain* Main = Cast<AMain>(OtherActor);
 		if (Main)
 		{
+			//Make enemy move to target Main when Main enters AgroSphere
 			MoveToTarget(Main);
 		}
 	}
@@ -68,17 +70,54 @@ void AEnemy::AgroSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, 
 
 void AEnemy::AgroSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	if (OtherActor)
+	{
+		AMain* Main = Cast<AMain>(OtherActor);
+		{
+			if (Main)
+			{
+				//Stop enemy movement when Main exits AgroSphere
+				SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Idle);
+				//Enemy is not stopping attacking with previous line of code, so we will manually stop it with AIController
+				if (AIController)
+				{
+					AIController->StopMovement();
+				}
 
+			}
+		}
+	}
 }
 
 void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-
+	if (OtherActor)
+	{
+		AMain* Main = Cast<AMain>(OtherActor);
+		{
+			if (Main)
+			{
+				//Start enemy attack when Main enters Combat Sphere
+				SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking);
+			}
+		}
+	}
 }
 
 void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-
+	if (OtherActor)
+	{
+		AMain* Main = Cast<AMain>(OtherActor);
+		{
+			if (Main)
+			{
+				//Set Enemy back to moving to target when Main exits combat sphere
+				SetEnemyMovementStatus(EEnemyMovementStatus::EMS_MoveToTarget);
+				MoveToTarget(Main);
+			}
+		}
+	}
 }
 
 void AEnemy::MoveToTarget(AMain* Target)
