@@ -67,7 +67,15 @@ public:
 	virtual void CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	//Create function to move enemy to target taking argument ActorMain stored in variable Target
+	UFUNCTION(BlueprintCallable)
 	void MoveToTarget(class AMain* Target);
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
+	bool bOverlappingCombatSphere;
+
+	//Create new variable of type Main called CombatTarget
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
+	AMain* CombatTarget;
 };
 
 

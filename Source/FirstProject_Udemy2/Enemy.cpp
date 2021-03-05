@@ -20,6 +20,8 @@ AEnemy::AEnemy()
 	CombatSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CombatSphere"));
 	CombatSphere->SetupAttachment(GetRootComponent());
 	CombatSphere->InitSphereRadius(75.f);
+
+	bOverlappingCombatSphere = false;
 }
 
 // Called when the game starts or when spawned
@@ -78,7 +80,7 @@ void AEnemy::AgroSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AA
 			{
 				//Stop enemy movement when Main exits AgroSphere
 				SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Idle);
-				//Enemy is not stopping attacking with previous line of code, so we will manually stop it with AIController
+				//Enemy is not stopping moving to target with previous line of code, so we will manually stop it with AIController
 				if (AIController)
 				{
 					AIController->StopMovement();
@@ -97,6 +99,8 @@ void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 		{
 			if (Main)
 			{
+				CombatTarget = Main; //set CombatTarget to Main
+				bOverlappingCombatSphere = true;
 				//Start enemy attack when Main enters Combat Sphere
 				SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking);
 			}
@@ -112,9 +116,13 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 		{
 			if (Main)
 			{
-				//Set Enemy back to moving to target when Main exits combat sphere
-				SetEnemyMovementStatus(EEnemyMovementStatus::EMS_MoveToTarget);
-				MoveToTarget(Main);
+				bOverlappingCombatSphere = false;
+				//If enemy is not attacking, call MoveToTarget
+				if (EnemyMovementStatus != EEnemyMovementStatus::EMS_Attacking)
+				{
+					MoveToTarget(Main);
+					CombatTarget = nullptr;
+				}
 			}
 		}
 	}
