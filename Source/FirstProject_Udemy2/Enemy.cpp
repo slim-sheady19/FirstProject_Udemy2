@@ -5,6 +5,7 @@
 #include "Components/SphereComponent.h"
 #include "AIController.h"
 #include "Main.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -90,10 +91,22 @@ void AEnemy::MoveToTarget(AMain* Target)
 		//Create FAIMoveRequest called MoveRequest and Specify input parameters
 		FAIMoveRequest MoveRequest;
 		MoveRequest.SetGoalActor(Target);
+		//Distance between collision volumes
 		MoveRequest.SetAcceptanceRadius(5.0f);
 
 		FNavPathSharedPtr NavPath;
 
 		AIController->MoveTo(MoveRequest, &NavPath);
+
+		//create array of type FNavPathPoints called PathPoints and call GetPathPoints from NavPath to store in the array
+		TArray<FNavPathPoint> PathPoints = NavPath->GetPathPoints();
+		//Loop through PathPoints to get locations and draw debug sphere
+		for (auto Point : PathPoints)
+		{
+			//Create local variable of type FVector called Location, call Location on each Point
+			FVector Location = Point.Location;
+			//Draw debug sphere
+			UKismetSystemLibrary::DrawDebugSphere(this, Location, 25.f, 8, FLinearColor::Blue, 10.f, 0.5f);
+		}
 	}
 }
