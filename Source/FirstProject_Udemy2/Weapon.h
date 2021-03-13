@@ -38,6 +38,19 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SkeletalMesh")
 	class USkeletalMeshComponent* SkeletalMesh;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item | Combat")
+	class UBoxComponent* CombatCollision;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item | Combat")
+	float Damage;
+
+	//Begin play is protected in base class, so we keep with convention here to be consistent
+protected:
+
+	virtual void BeginPlay() override;
+
+public:
+
 	//Inherited function cannot be marked UFUNCTION.  We use "override" to overwrite the properties of the parent function
 	virtual void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 
@@ -49,4 +62,9 @@ public:
 	FORCEINLINE void SetWeaponState(EWeaponState State) { WeaponState = State; } 
 	FORCEINLINE EWeaponState GetWeaponState() { return WeaponState; } //Create function called GetWeaponState (takes no paramters) and returns WeaponState
 	
+	UFUNCTION()
+	void CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void CombatOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 };
