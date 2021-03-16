@@ -165,9 +165,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AttackEnd();
 
-
 	//Create Anim Montage for this character
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Anims")
 	class UAnimMontage* CombatMontage;
+
+	UFUNCTION(BlueprintCallable)
+	void PlaySwingSound();
 
 };
