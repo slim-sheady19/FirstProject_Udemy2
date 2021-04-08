@@ -12,6 +12,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Sound/SoundCue.h"
+#include "Animation/AnimInstance.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -52,6 +53,11 @@ void AEnemy::BeginPlay()
 
 	CombatSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::CombatSphereOnOverlapBegin);
 	CombatSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::CombatSphereOnOverlapEnd);
+
+	//Bind Combat overlap events
+	CombatCollision->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::CombatOnOverlapBegin);
+	CombatCollision->OnComponentEndOverlap.AddDynamic(this, &AEnemy::CombatOnOverlapEnd);
+
 
 	//Hardcode collision default collision settings in to Enemy_BP
 	CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -122,7 +128,7 @@ void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 				CombatTarget = Main; //set CombatTarget to Main
 				bOverlappingCombatSphere = true;
 				//Start enemy attack when Main enters Combat Sphere
-				SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking);
+				Attack();				
 			}
 		}
 	}
@@ -165,7 +171,8 @@ void AEnemy::MoveToTarget(AMain* Target)
 
 		AIController->MoveTo(MoveRequest, &NavPath);
 
-		//create array of type FNavPathPoints called PathPoints and call GetPathPoints from NavPath to store in the array
+		/*
+		create array of type FNavPathPoints called PathPoints and call GetPathPoints from NavPath to store in the array
 		TArray<FNavPathPoint> PathPoints = NavPath->GetPathPoints();
 		//Loop through PathPoints to get locations and draw debug sphere
 		for (auto Point : PathPoints)
@@ -175,6 +182,7 @@ void AEnemy::MoveToTarget(AMain* Target)
 			//Draw debug sphere
 			UKismetSystemLibrary::DrawDebugSphere(this, Location, 25.f, 8, FLinearColor::Blue, 10.f, 0.5f);
 		}
+		*/
 	}
 }
 
@@ -212,4 +220,53 @@ void AEnemy::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAct
 void AEnemy::CombatOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 
+}
+
+void AEnemy::ActivateCollision()
+{
+	CombatCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly); //QueryOnly ensures we do not use physics and just overlap events
+	if (SwingSound)
+	{
+		UGameplayStatics::PlaySound2D(this, SwingSound);
+	}
+}
+
+void AEnemy::DeactivateCollision()
+{
+	CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void AEnemy::Attack()
+{
+	//check if we need to stop enemy movement
+	if (AIController) //is valid
+	{
+		//stop movement andf set enemy movement status to attacking
+		AIController->StopMovement();
+		SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking);
+	}
+	// check enemy is not already attacking so we don't interrupt
+	if (!bAttacking)
+	{
+
+		bAttacking = true;
+		//Get AnimInstance from mesh
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance) //is valid
+		{
+			//Play combat montage at 1.35x speed, and jump to Attack section
+			AnimInstance->Montage_Play(CombatMontage, 1.35f);
+			AnimInstance->Montage_JumpToSection(FName("Attack"), CombatMontage);
+		}
+	}
+}
+
+void AEnemy::AttackEnd()
+{
+	bAttacking = false;
+	//if Main is still in combat sphere, call Attack again
+	if (bOverlappingCombatSphere)
+	{
+		Attack();
+	}
 }
