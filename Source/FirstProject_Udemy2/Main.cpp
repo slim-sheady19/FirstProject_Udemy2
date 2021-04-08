@@ -13,6 +13,8 @@
 #include "Animation/AnimInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundCue.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Enemy.h"
 
 
 // Sets default values
@@ -70,6 +72,9 @@ AMain::AMain()
 
 	StaminaDrainRate = 25.f;
 	MinSprintStamina = 50.f;
+
+	InterpSpeed = 15.f;
+	bInterpToEnemy = false;
 }
 
 // Called when the game starts or when spawned
@@ -182,6 +187,24 @@ void AMain::Tick(float DeltaTime)
 		;
 	}
 
+	if (bInterpToEnemy && CombatTarget)
+	{
+		FRotator LookAtYaw = GetLookAtRotationYaw(CombatTarget->GetActorLocation());
+		//Use RInterpTo so that Main doesn't just snap immediately, will be a more smooth turn
+		FRotator InterpRotation = FMath::RInterpTo(GetActorRotation(), LookAtYaw, DeltaTime, InterpSpeed);
+
+		SetActorRotation(InterpRotation);
+	}
+
+}
+
+FRotator AMain::GetLookAtRotationYaw(FVector Target)
+{
+	//Create variable of type FRotator, which is the function of UkismetMathLibrary with input paramaters of Main's ActorLocation and Target's location
+	FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target);
+	//Isolate yaw from LookAtRotation
+	FRotator LookAtRotationYaw(0.f, LookAtRotation.Yaw, 0.f);
+	return LookAtRotationYaw;
 }
 
 // Called to bind functionality to input
@@ -350,6 +373,7 @@ void AMain::Attack()
 	{
 	
 		bAttacking = true;
+		SetInterpToEnemy(true);
 
 		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 		if (AnimInstance && CombatMontage) //is valid
@@ -377,6 +401,7 @@ void AMain::Attack()
 void AMain::AttackEnd()
 {
 	bAttacking = false;
+	SetInterpToEnemy(false);
 	if (bLMBDown)
 	{
 		Attack();
@@ -390,4 +415,9 @@ void AMain::PlaySwingSound()
 		UGameplayStatics::PlaySound2D(this, EquippedWeapon->SwingSound);
 	}
 	
+}
+
+void AMain::SetInterpToEnemy(bool Interp)
+{
+	bInterpToEnemy = Interp;
 }
