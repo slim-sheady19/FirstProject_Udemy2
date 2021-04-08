@@ -116,7 +116,7 @@ void AWeapon::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAc
 				{
 					//local variable of type FVector called SocketLocation by calling GetsocketLocation on WeaponSocket
 					FVector SocketLocation = WeaponSocket->GetSocketLocation(SkeletalMesh);
-					UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Enemy->HitParticles, GetActorLocation(), FRotator(0.f), false);
+					UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Enemy->HitParticles, SocketLocation, FRotator(0.f), false);
 				}
 			}
 			if (Enemy->HitSound)

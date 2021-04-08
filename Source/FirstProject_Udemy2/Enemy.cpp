@@ -6,6 +6,12 @@
 #include "AIController.h"
 #include "Main.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Components/BoxComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Main.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/SkeletalMeshSocket.h"
+#include "Sound/SoundCue.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -20,6 +26,10 @@ AEnemy::AEnemy()
 	CombatSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CombatSphere"));
 	CombatSphere->SetupAttachment(GetRootComponent());
 	CombatSphere->InitSphereRadius(75.f);
+
+	//  Create Box Component and attach to socket on enemy "Enemysocket"
+	CombatCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("CombatCollision"));
+	CombatCollision->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("EnemySocket"));
 
 	bOverlappingCombatSphere = false;
 
@@ -42,6 +52,12 @@ void AEnemy::BeginPlay()
 
 	CombatSphere->OnComponentBeginOverlap.AddDynamic(this, &AEnemy::CombatSphereOnOverlapBegin);
 	CombatSphere->OnComponentEndOverlap.AddDynamic(this, &AEnemy::CombatSphereOnOverlapEnd);
+
+	//Hardcode collision default collision settings in to Enemy_BP
+	CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	CombatCollision->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	CombatCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	CombatCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap); //Generate overlap events only when collided with Pawn
 	
 }
 
@@ -160,4 +176,40 @@ void AEnemy::MoveToTarget(AMain* Target)
 			UKismetSystemLibrary::DrawDebugSphere(this, Location, 25.f, 8, FLinearColor::Blue, 10.f, 0.5f);
 		}
 	}
+}
+
+void AEnemy::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	//check if overlapped other actor is valid
+	if (OtherActor)
+	{
+		//cast to enemy.  First create local variable of type AEnemy called Enemy
+		AMain* Main = Cast<AMain>(OtherActor);
+		//check cast was successful
+		if (Main)
+		{
+			//play hit particles, first check is valid otherwise engine will crash
+			if (Main->HitParticles)
+			{
+				//create local variable called TipSocket of type SkeletalMeshSocket by calling GetSocketByName
+				const USkeletalMeshSocket* TipSocket = GetMesh()->GetSocketByName("TipSocket");
+				if (TipSocket) //is valid
+				{
+					//local variable of type FVector called SocketLocation by calling GetsocketLocation on TipSocket
+					FVector SocketLocation = TipSocket->GetSocketLocation(GetMesh());
+					UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Main->HitParticles, SocketLocation, FRotator(0.f), false);
+				}
+			}
+			if (Main->HitSound)
+			{
+				UGameplayStatics::PlaySound2D(this, Main->HitSound);
+			}
+		}
+	}
+}
+
+
+void AEnemy::CombatOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+
 }
