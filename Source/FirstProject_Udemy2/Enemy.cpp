@@ -14,6 +14,7 @@
 #include "Sound/SoundCue.h"
 #include "Animation/AnimInstance.h"
 #include "TimerManager.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -147,7 +148,12 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 		{
 			if (Main)
 			{
-				Main->SetCombatTarget(nullptr);
+				//check the CombatTarget is this specific instance of Enemy
+				if (Main->CombatTarget == this)
+				{
+					//Set combat target to null if Main has moved out of CombatSphere
+					Main->SetCombatTarget(nullptr);
+				}
 				bOverlappingCombatSphere = false;
 				//If enemy is not attacking, call MoveToTarget
 				if (EnemyMovementStatus != EEnemyMovementStatus::EMS_Attacking)
@@ -220,6 +226,11 @@ void AEnemy::CombatOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AAct
 			{
 				UGameplayStatics::PlaySound2D(this, Main->HitSound);
 			}
+			//apply damage
+			if (DamageTypeClass)
+			{
+				UGameplayStatics::ApplyDamage(Main, Damage, AIController, this, DamageTypeClass);
+			}
 		}
 	}
 }
@@ -281,3 +292,41 @@ void AEnemy::AttackEnd()
 		GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
 	}
 }
+
+float AEnemy::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+{
+	if (Health - DamageAmount <= 0.f)
+	{
+		Health -= DamageAmount;
+		Die();
+	}
+	else
+	{
+		Health -= DamageAmount;
+	}
+
+	return DamageAmount;
+}
+
+void AEnemy::Die()
+{
+	//Get AnimInstance from mesh
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance) //is valid
+	{
+		//Play combat montage at 1.35x speed, and jump to Attack section
+		AnimInstance->Montage_Play(CombatMontage, 1.35f);
+		AnimInstance->Montage_JumpToSection(FName("Death"), CombatMontage);
+	}
+	SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Dead);
+
+	//remove collisions from components when character dies
+	CombatCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	AgroSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	CombatSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+
+
+}
+

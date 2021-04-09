@@ -126,6 +126,9 @@ public:
 
 	void DecrementHealth(float Amount);
 
+	//Inherited (from Actor class) function TakeDamage that returns float with function signature copied from UE4 documentation
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+
 	void IncrementCoins(int32 Amount);
 
 	void Die();
