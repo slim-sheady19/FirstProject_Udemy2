@@ -13,6 +13,7 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Sound/SoundCue.h"
 #include "Animation/AnimInstance.h"
+#include "TimerManager.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -37,6 +38,9 @@ AEnemy::AEnemy()
 	Health = 75.f;
 	MaxHealth = 100.f;
 	Damage = 10.f;
+
+	AttackMinTime = 0.5f;
+	AttackMaxTime = 3.5f;
 }
 
 // Called when the game starts or when spawned
@@ -151,6 +155,8 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 					MoveToTarget(Main);
 					CombatTarget = nullptr;
 				}
+				//Reset enemy attack timer when Main leaves enemy combat sphere
+				GetWorldTimerManager().ClearTimer(AttackTimer);
 			}
 		}
 	}
@@ -269,6 +275,9 @@ void AEnemy::AttackEnd()
 	//if Main is still in combat sphere, call Attack again
 	if (bOverlappingCombatSphere)
 	{
-		Attack();
+		//create float called AttackTime of random range between 0.5 and 3.5 (default values in constructor)
+		float AttackTime = FMath::FRandRange(AttackMinTime, AttackMaxTime);
+		//Ue SetTimer function to create delay between next Attack function called
+		GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
 	}
 }
