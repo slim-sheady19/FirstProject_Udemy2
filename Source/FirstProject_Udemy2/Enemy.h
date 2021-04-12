@@ -34,6 +34,9 @@ public:
 	//Inline Setter
 	FORCEINLINE void SetEnemyMovementStatus(EEnemyMovementStatus Status) { EnemyMovementStatus = Status; }
 
+	//Inline getter
+	FORCEINLINE EEnemyMovementStatus GetEnemyMovementStatus() { return EnemyMovementStatus; }
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	class USphereComponent* AgroSphere;
 
@@ -79,6 +82,13 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	TSubclassOf<UDamageType> DamageTypeClass;
+
+	//Timer handle to delay the destruction of Enemy after death
+	FTimerHandle DeathTimer;
+
+	//float for the amount of time to delay the destruction
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat)
+	float DeathDelay;
 
 protected:
 	// Called when the game starts or when spawned
@@ -137,6 +147,15 @@ public:
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
 	void Die();
+
+	//Function to freeze enemy anims upon death
+	UFUNCTION(BlueprintCallable)
+	void DeathEnd();
+
+	//boolean Function to quickly check whether enemy is alive or dead
+	bool Alive();
+
+	void Disappear();
 };
 
 

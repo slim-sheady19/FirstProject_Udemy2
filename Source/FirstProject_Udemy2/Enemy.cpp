@@ -42,6 +42,10 @@ AEnemy::AEnemy()
 
 	AttackMinTime = 0.5f;
 	AttackMaxTime = 3.5f;
+
+	EnemyMovementStatus = EEnemyMovementStatus::EMS_Idle;
+
+	DeathDelay = 3.f;
 }
 
 // Called when the game starts or when spawned
@@ -89,8 +93,8 @@ void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AEnemy::AgroSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	//Check if it's an Other Actor
-	if (OtherActor)
+	//Check if it's an Other Actor and that enemy is Alive
+	if (OtherActor && Alive())
 	{
 		AMain* Main = Cast<AMain>(OtherActor);
 		if (Main)
@@ -124,7 +128,7 @@ void AEnemy::AgroSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AA
 
 void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (OtherActor)
+	if (OtherActor && Alive())
 	{
 		AMain* Main = Cast<AMain>(OtherActor);
 		{
@@ -257,27 +261,31 @@ void AEnemy::DeactivateCollision()
 
 void AEnemy::Attack()
 {
-	//check if we need to stop enemy movement
-	if (AIController) //is valid
+	if (Alive())
 	{
-		//stop movement andf set enemy movement status to attacking
-		AIController->StopMovement();
-		SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking);
-	}
-	// check enemy is not already attacking so we don't interrupt
-	if (!bAttacking)
-	{
-
-		bAttacking = true;
-		//Get AnimInstance from mesh
-		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-		if (AnimInstance) //is valid
+		//check if we need to stop enemy movement
+		if (AIController) //is valid
 		{
-			//Play combat montage at 1.35x speed, and jump to Attack section
-			AnimInstance->Montage_Play(CombatMontage, 1.35f);
-			AnimInstance->Montage_JumpToSection(FName("Attack"), CombatMontage);
+			//stop movement andf set enemy movement status to attacking
+			AIController->StopMovement();
+			SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Attacking);
+		}
+		// check enemy is not already attacking so we don't interrupt
+		if (!bAttacking)
+		{
+
+			bAttacking = true;
+			//Get AnimInstance from mesh
+			UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+			if (AnimInstance) //is valid
+			{
+				//Play combat montage at 1.35x speed, and jump to Attack section
+				AnimInstance->Montage_Play(CombatMontage, 1.35f);
+				AnimInstance->Montage_JumpToSection(FName("Attack"), CombatMontage);
+			}
 		}
 	}
+	
 }
 
 void AEnemy::AttackEnd()
@@ -325,8 +333,24 @@ void AEnemy::Die()
 	AgroSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	CombatSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-
-
 }
 
+void AEnemy::DeathEnd()
+{
+	GetMesh()->bPauseAnims = true;
+	GetMesh()->bNoSkeletonUpdate = true;
+
+	//When Enemy dies, set a timer that calls Disappear using inputs DeathTimer(timer), this(this object), and DeathDelay(float for amount of time)
+	GetWorldTimerManager().SetTimer(DeathTimer, this, &AEnemy::Disappear, DeathDelay);
+}
+
+bool AEnemy::Alive()
+{
+	//check EnemyMovementStatus is not set to Dead
+	return GetEnemyMovementStatus() != EEnemyMovementStatus::EMS_Dead;
+}
+
+void AEnemy::Disappear()
+{
+	Destroy();
+}
