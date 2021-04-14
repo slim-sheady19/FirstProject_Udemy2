@@ -114,6 +114,13 @@ void AEnemy::AgroSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AA
 		{
 			if (Main)
 			{
+				//check the CombatTarget is this specific instance of Enemy
+				if (Main->CombatTarget == this)
+				{
+					//Set combat target to null if Main has moved out of CombatSphere
+					Main->SetCombatTarget(nullptr);
+				}
+				Main->SetHasCombatTarget(false);
 				//remove enemy health bar after Main leaves agrosphere
 				if (Main->MainPlayerController)
 				{
@@ -141,6 +148,7 @@ void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 			if (Main)
 			{
 				Main->SetCombatTarget(this);
+				Main->SetHasCombatTarget(true);
 				//When Main enters enemy combatsphere, display the enemy health bar
 				if (Main->MainPlayerController)
 				{
@@ -163,12 +171,6 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 		{
 			if (Main)
 			{
-				//check the CombatTarget is this specific instance of Enemy
-				if (Main->CombatTarget == this)
-				{
-					//Set combat target to null if Main has moved out of CombatSphere
-					Main->SetCombatTarget(nullptr);
-				}
 				bOverlappingCombatSphere = false;
 				//If enemy is not attacking, call MoveToTarget
 				if (EnemyMovementStatus != EEnemyMovementStatus::EMS_Attacking)

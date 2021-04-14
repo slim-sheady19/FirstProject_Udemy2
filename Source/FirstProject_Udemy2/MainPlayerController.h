@@ -36,7 +36,11 @@ public:
 	void DisplayEnemyHealthBar();
 	void RemoveEnemyHealthBar();
 
+	FVector EnemyLocation;
+
 protected:
 	virtual void BeginPlay() override;
 	
+	//override Tick (Player controller class is an Actor so it inherits Tick)
+	virtual void Tick(float DeltaTime) override;
 };
