@@ -23,6 +23,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
 	UUserWidget* HUDOverlay;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<UUserWidget> WEnemyHealthBar;
+
+	//Variable for enemy health bar widget (goal is to make it only appear when player is in combatsphere and disappear after leaving agrosphere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UUserWidget* EnemyHealthBar;
+
+	bool bEnemyHealthBarVisible;
+
+	//functions to show or hide enemy health bar
+	void DisplayEnemyHealthBar();
+	void RemoveEnemyHealthBar();
+
 protected:
 	virtual void BeginPlay() override;
 	

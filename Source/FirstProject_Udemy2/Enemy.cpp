@@ -15,6 +15,7 @@
 #include "Animation/AnimInstance.h"
 #include "TimerManager.h"
 #include "Components/CapsuleComponent.h"
+#include "MainPlayerController.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -113,6 +114,11 @@ void AEnemy::AgroSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AA
 		{
 			if (Main)
 			{
+				//remove enemy health bar after Main leaves agrosphere
+				if (Main->MainPlayerController)
+				{
+					Main->MainPlayerController->RemoveEnemyHealthBar();
+				}
 				//Stop enemy movement when Main exits AgroSphere
 				SetEnemyMovementStatus(EEnemyMovementStatus::EMS_Idle);
 				//Enemy is not stopping moving to target with previous line of code, so we will manually stop it with AIController
@@ -135,6 +141,11 @@ void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 			if (Main)
 			{
 				Main->SetCombatTarget(this);
+				//When Main enters enemy combatsphere, display the enemy health bar
+				if (Main->MainPlayerController)
+				{
+					Main->MainPlayerController->DisplayEnemyHealthBar();
+				}
 				CombatTarget = Main; //set CombatTarget to Main
 				bOverlappingCombatSphere = true;
 				//Start enemy attack when Main enters Combat Sphere
