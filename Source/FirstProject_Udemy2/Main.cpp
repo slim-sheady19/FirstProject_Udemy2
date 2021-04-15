@@ -94,6 +94,8 @@ void AMain::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (MovementStatus == EMovementStatus::EMS_Dead) return; //check Main isn't dead before proceeding
+
 	float DeltaStamina = StaminaDrainRate * DeltaTime; //create float variable called DeltaStamina that is equal to stamina drain rate times difference in time
 
 	switch (StaminaStatus) //switch statement for all the cases of stamina statuses
@@ -230,7 +232,7 @@ void AMain::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	check(PlayerInputComponent); //check is playerinputcomponent is valid
 
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMain::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AMain::ShiftKeyDown);
@@ -250,9 +252,10 @@ void AMain::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 }
 
-void AMain:: MoveForward(float Value)
+void AMain::MoveForward(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking)) //check for null pointer and need to make sure key is pressed so that we want to move forward (value != 0.0f). can't be attacking
+	////check for null pointer and need to make sure key is pressed so that we want to move forward (value != 0.0f). can't be attacking.  also check Main is not dead
+	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (MovementStatus != EMovementStatus::EMS_Dead))
 	{
 		//find out which way is forward 
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -267,7 +270,8 @@ void AMain:: MoveForward(float Value)
 
 void AMain::MoveRight(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking)) //check for null pointer and need to make sure key is pressed so that we want to move forward (value != 0.0f). can't be attacking
+	//check for null pointer and need to make sure key is pressed so that we want to move forward (value != 0.0f). can't be attacking.  also check Main is not Dead
+	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (MovementStatus != EMovementStatus::EMS_Dead))
 	{
 		//find out which way is forward 
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -293,6 +297,8 @@ void AMain::LookUpAtRate(float Rate)
 void AMain::LMBDown()
 {
 	bLMBDown = true;
+
+	if (MovementStatus == EMovementStatus::EMS_Dead) return;
 
 	if (ActiveOverlappingItem)
 	{
@@ -336,12 +342,29 @@ void AMain::IncrementCoins(int32 Amount)
 
 void AMain::Die()
 {
+	if (MovementStatus == EMovementStatus::EMS_Dead) return; //check Main is not already in the middle of dying before proceeding
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && CombatMontage) //is valid
 	{
 		AnimInstance->Montage_Play(CombatMontage, 1.0f);
 		AnimInstance->Montage_JumpToSection(FName("Death"));
 	}
+	SetMovementStatus(EMovementStatus::EMS_Dead);
+}
+
+void AMain::Jump()
+{
+	if (MovementStatus != EMovementStatus::EMS_Dead)
+	{
+		ACharacter::Jump();
+	}
+}
+
+void AMain::DeathEnd()
+{
+	//stop character from moving after death
+	GetMesh()->bPauseAnims = true;
+	GetMesh()->bNoSkeletonUpdate = true;
 }
 
 void AMain::SetMovementStatus(EMovementStatus Status)
@@ -391,7 +414,7 @@ void AMain::SetEquippedWeapon(AWeapon* WeaponToSet)
 
 void AMain::Attack()
 {
-	if (!bAttacking) //ensure we are not in already Attacking state before next attack
+	if (!bAttacking && MovementStatus != EMovementStatus::EMS_Dead) //ensure we are not in already Attacking state and not dead before next attack
 	{
 	
 		bAttacking = true;
