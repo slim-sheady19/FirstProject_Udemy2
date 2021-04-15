@@ -3,6 +3,10 @@
 
 #include "Pickup.h"
 #include "Main.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/Soundcue.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "Engine/World.h"
 
 APickup::APickup()
 {
@@ -13,7 +17,6 @@ void APickup::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* O
 {
 	Super::OnOverlapBegin(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
-	UE_LOG(LogTemp, Warning, TEXT("Pickup::OnOverlapBegin()"));
 
 	if (OtherActor)
 	{
@@ -21,7 +24,15 @@ void APickup::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* O
 		if (Main)
 		{
 			Main->IncrementCoins(CoinCount);
-			Main->PickupLocations.Add(GetActorLocation()); // when casting in Main, add location of pickup in array PickupLocations
+			//once we know it is Main overlapping, spawn the PFX and SFX
+			if (OverlapParticles) //check to make sure OverlapParticles is not null
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), OverlapParticles, GetActorLocation(), FRotator(0.f), true);
+			}
+			if (OverlapSound)
+			{
+				UGameplayStatics::PlaySound2D(this, OverlapSound);
+			}
 
 			Destroy(); //destroy actor once picked up
 		}
