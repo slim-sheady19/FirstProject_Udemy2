@@ -33,7 +33,7 @@ AEnemy::AEnemy()
 
 	//  Create Box Component and attach to socket on enemy "Enemysocket"
 	CombatCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("CombatCollision"));
-	CombatCollision->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, FName("EnemySocket"));
+	CombatCollision->SetupAttachment(GetMesh(), FName("EnemySocket")); //changed from AttachToComponent which editor was giving error for in game
 
 	bOverlappingCombatSphere = false;
 
