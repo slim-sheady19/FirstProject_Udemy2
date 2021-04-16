@@ -26,6 +26,7 @@ AEnemy::AEnemy()
 	AgroSphere = CreateDefaultSubobject<USphereComponent>(TEXT("AgroSphere"));
 	AgroSphere->SetupAttachment(GetRootComponent());
 	AgroSphere->InitSphereRadius(600.f);
+	AgroSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Ignore); //Ignore overlap events World Dynamic (so it doesnt trigger explosive)
 
 	CombatSphere = CreateDefaultSubobject<USphereComponent>(TEXT("CombatSphere"));
 	CombatSphere->SetupAttachment(GetRootComponent());
@@ -160,8 +161,10 @@ void AEnemy::CombatSphereOnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 				}
 				CombatTarget = Main; //set CombatTarget to Main
 				bOverlappingCombatSphere = true;
-				//Start enemy attack when Main enters Combat Sphere
-				Attack();				
+				//create float called AttackTime of random range between 0.5 and 3.5 (default values in constructor)
+				float AttackTime = FMath::FRandRange(AttackMinTime, AttackMaxTime);
+				//Ue SetTimer function to create delay between next Attack function called
+				GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
 			}
 		}
 	}
@@ -176,8 +179,8 @@ void AEnemy::CombatSphereOnOverlapEnd(UPrimitiveComponent* OverlappedComponent, 
 			if (Main)
 			{
 				bOverlappingCombatSphere = false;
-				//If enemy is not attacking, call MoveToTarget
-				if (EnemyMovementStatus != EEnemyMovementStatus::EMS_Attacking)
+				//If enemy is attacking, call MoveToTarget
+				if (EnemyMovementStatus == EEnemyMovementStatus::EMS_Attacking)
 				{
 					MoveToTarget(Main);
 					CombatTarget = nullptr;
@@ -311,10 +314,7 @@ void AEnemy::AttackEnd()
 	//if Main is still in combat sphere, call Attack again
 	if (bOverlappingCombatSphere)
 	{
-		//create float called AttackTime of random range between 0.5 and 3.5 (default values in constructor)
-		float AttackTime = FMath::FRandRange(AttackMinTime, AttackMaxTime);
-		//Ue SetTimer function to create delay between next Attack function called
-		GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
+	
 	}
 }
 
