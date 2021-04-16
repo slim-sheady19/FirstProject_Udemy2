@@ -79,6 +79,8 @@ AMain::AMain()
 
 	bHasCombatTarget = false;
 
+	bMovingForward = false;
+	bMovingRight = false;
 }
 
 // Called when the game starts or when spawned
@@ -92,6 +94,7 @@ void AMain::BeginPlay()
 // Called every frame
 void AMain::Tick(float DeltaTime)
 {
+	//Super is the keyword for inheriting parent class function, in this case Actor:Tick
 	Super::Tick(DeltaTime);
 
 	if (MovementStatus == EMovementStatus::EMS_Dead) return; //check Main isn't dead before proceeding
@@ -106,15 +109,20 @@ void AMain::Tick(float DeltaTime)
 			if (Stamina - DeltaStamina <= MinSprintStamina) //if stamina - difference in stamina is less than or equal to minimum sprintable stamina,
 			{
 				SetStaminaStatus(EStaminaStatus::ESS_BelowMinimum); //then set stamina status to below the minimum sprintable state
-				Stamina -= DeltaStamina; //and continue to drain stamina
-				UE_LOG(LogTemp, Warning, TEXT("Stamina status below min"));
+				Stamina -= DeltaStamina; //and continue to drain stamina	
 			}
 			else //else stamina - difference in stamina is greater than minimum sprintable stanima
 			{
 				Stamina -= DeltaStamina; //or drain stamina
 			}
-			SetMovementStatus(EMovementStatus::EMS_Sprinting); // if we are in normal stanima state and shift key is down, change movement status to sprinting
-			UE_LOG(LogTemp, Warning, TEXT("Movement status sprinting"));
+			if (bMovingForward || bMovingRight) // if we are in normal stanima state, and moving, and shift key is down, change movement status to sprinting
+			{
+				SetMovementStatus(EMovementStatus::EMS_Sprinting); 
+			}
+			else //go back to Normal
+			{
+				SetMovementStatus(EMovementStatus::EMS_Normal);
+			}
 		}
 		else //else we are in normal stamina status and shift key is up, do the following
 		{
@@ -127,7 +135,7 @@ void AMain::Tick(float DeltaTime)
 				Stamina += DeltaStamina; //regenerate stamina
 			}
 			SetMovementStatus(EMovementStatus::EMS_Normal); // we are in normal stamina state and shift key is up so set movement status to normal
-			UE_LOG(LogTemp, Warning, TEXT("Movement status normal"));
+			
 		}
 		break;
 	case EStaminaStatus::ESS_BelowMinimum: //case stamina status where we are at 0 stamina and/or below minimum sprintable stamina
@@ -138,14 +146,18 @@ void AMain::Tick(float DeltaTime)
 				SetStaminaStatus(EStaminaStatus::ESS_Exhausted); //set stamina status to exhausted
 				Stamina = 0.f; //and set stamina to 0
 				SetMovementStatus(EMovementStatus::EMS_Normal); //and set movement status to normal
-				UE_LOG(LogTemp, Warning, TEXT("stamina status exhausted"));
-				UE_LOG(LogTemp, Warning, TEXT("movement status normal"));
 			}
 			else //else stamina minus drained stamina is greater than 0
 			{
 				Stamina -= DeltaStamina; //then continue to drain stamina
-				SetMovementStatus(EMovementStatus::EMS_Sprinting); //and set movement status to sprinting
-				UE_LOG(LogTemp, Warning, TEXT("movement status sprinting"));
+				if (bMovingForward || bMovingRight) //if either Moving Forward or Moving Right is true, set Movement status to Sprinting
+				{
+					SetMovementStatus(EMovementStatus::EMS_Sprinting);
+				}
+				else //go back to Normal
+				{
+					SetMovementStatus(EMovementStatus::EMS_Normal);
+				}
 			}
 		}
 		else  //shift key up
@@ -154,14 +166,12 @@ void AMain::Tick(float DeltaTime)
 			{
 				SetStaminaStatus(EStaminaStatus::ESS_Normal); //then set stamina status to normal state
 				Stamina += DeltaStamina; //and regenerate stamina
-				UE_LOG(LogTemp, Warning, TEXT("stamina status normal"));
 			}
 			else //else stamina + regenrated stamina is still less than minimum sprintable stamina (case normal)
 			{
 				Stamina += DeltaStamina; //regenerate stamina
 			}
 			SetMovementStatus(EMovementStatus::EMS_Normal); //set movement status to normal because shift key is up
-			UE_LOG(LogTemp, Warning, TEXT("movement status normal"));
 		}
 		break;
 	case EStaminaStatus::ESS_Exhausted: //case stamina status where stamina has reached 0 and we are unable to sprint
@@ -173,7 +183,6 @@ void AMain::Tick(float DeltaTime)
 		{
 			SetStaminaStatus(EStaminaStatus::ESS_ExhaustedRecovering); //set stamina status to recovering while still below minimum sprintable (case ExhaustedRecovering)
 			Stamina += DeltaStamina; //regenerate stamina
-			UE_LOG(LogTemp, Warning, TEXT("stamina status ExhaustedRecovering"));
 		}
 		SetMovementStatus(EMovementStatus::EMS_Normal); //whether shift key is up or down movement status gets set to normal
 		break;
@@ -182,14 +191,12 @@ void AMain::Tick(float DeltaTime)
 		{
 			SetStaminaStatus(EStaminaStatus::ESS_Normal); //then set stamina status to normal
 			Stamina += DeltaStamina; //and continue to regenerate stamina
-			UE_LOG(LogTemp, Warning, TEXT("stamina status normal"));
 		}
 		else //else stamina plus regenerated stamina is still less than minimum sprintable
 		{
 			Stamina += DeltaStamina; //continue to regenerate
 		}
 		SetMovementStatus(EMovementStatus::EMS_Normal); //whether shift key is up or down movement status remnains in normal
-		UE_LOG(LogTemp, Warning, TEXT("movement status normal"));
 		break;
 	default:
 		;
@@ -254,6 +261,8 @@ void AMain::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void AMain::MoveForward(float Value)
 {
+	//Set MovingForward to false otherwise it will only ever stay on true.  before the next checks
+	bMovingForward = false;
 	////check for null pointer and need to make sure key is pressed so that we want to move forward (value != 0.0f). can't be attacking.  also check Main is not dead
 	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (MovementStatus != EMovementStatus::EMS_Dead))
 	{
@@ -265,11 +274,15 @@ void AMain::MoveForward(float Value)
 		// in other words we are accessing the local axis rotation and want to move forward based on that (usually X is forward)
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X); 
 		AddMovementInput(Direction, Value);
+
+		bMovingForward = true;
 	}
 }
 
 void AMain::MoveRight(float Value)
 {
+	//Set MovingForward to false otherwise it will only ever stay on true.  before the next checks
+	bMovingRight = false;
 	//check for null pointer and need to make sure key is pressed so that we want to move forward (value != 0.0f). can't be attacking.  also check Main is not Dead
 	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (MovementStatus != EMovementStatus::EMS_Dead))
 	{
@@ -280,6 +293,8 @@ void AMain::MoveRight(float Value)
 		//doing same as above but just for Y axis instead of X	
 		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 		AddMovementInput(Direction, Value);
+
+		bMovingRight = true;
 	}
 }
 
