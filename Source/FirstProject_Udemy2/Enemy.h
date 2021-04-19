@@ -147,7 +147,7 @@ public:
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
-	void Die();
+	void Die(AActor* Causer); //take argument type Actor called Causer
 
 	//Function to freeze enemy anims upon death
 	UFUNCTION(BlueprintCallable)

@@ -217,4 +217,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DeathEnd();
 
+	//function to update Main's combat target after killing an enemy (for fighting multiple enemies)
+	void UpdateCombatTarget();
+
+	//Array to hold all Combat Targets for function above. We filter for only Enemy actors
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TSubclassOf<AEnemy> EnemyFilter;
+
 };

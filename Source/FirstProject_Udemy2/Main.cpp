@@ -497,3 +497,45 @@ float AMain::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEve
 
 	return DamageAmount;
 }
+
+void AMain::UpdateCombatTarget()
+{
+	TArray<AActor*> OverlappingActors; //create array of overlapping actors
+	GetOverlappingActors(OverlappingActors, EnemyFilter); //get overlapping actors, place them in array OverlappingActors and filter for Enemy actors
+
+	if (OverlappingActors.Num() == 0)//if the array of overlapping actors has nothing, remove health bars
+	{
+		{
+			MainPlayerController->RemoveEnemyHealthBar();
+		}
+		return;
+	}
+
+	AEnemy* ClosestEnemy = Cast<AEnemy>(OverlappingActors[0]); //variable to hold the closest enemy
+	if (ClosestEnemy)
+	{
+		FVector Location = GetActorLocation(); //create a variable to be used as shortcut to GetActorLocation function for use in following lines 
+		//create variable of type float called MinDistance from getting the ClosestEnemy's location subtracted by Main's location
+		float MinDistance = (ClosestEnemy->GetActorLocation() - Location).Size();
+
+		for (auto Actor : OverlappingActors) //loop through array of overlapping actors to check which is closest and set that Enemy to Closest Enemy
+		{
+			AEnemy* Enemy = Cast<AEnemy>(Actor);
+			if (Enemy)
+			{
+				float DistanceToActor = (Enemy->GetActorLocation() - Location).Size();
+				if (DistanceToActor < MinDistance)
+				{
+					MinDistance = DistanceToActor;
+					ClosestEnemy = Enemy;
+				}
+			}
+		}
+		if (MainPlayerController)
+		{
+			MainPlayerController->DisplayEnemyHealthBar();
+		}
+		SetCombatTarget(ClosestEnemy);
+		bHasCombatTarget = true;
+	}
+}
