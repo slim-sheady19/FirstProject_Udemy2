@@ -323,7 +323,8 @@ void AEnemy::AttackEnd()
 	//if Main is still in combat sphere, call Attack again
 	if (bOverlappingCombatSphere)
 	{
-	
+		float AttackTime = FMath::FRandRange(AttackMinTime, AttackMaxTime);
+		GetWorldTimerManager().SetTimer(AttackTimer, this, &AEnemy::Attack, AttackTime);
 	}
 }
 
