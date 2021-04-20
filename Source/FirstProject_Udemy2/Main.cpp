@@ -347,6 +347,18 @@ void AMain::IncrementCoins(int32 Amount)
 	Coins += Amount;
 }
 
+void AMain::IncrementHealth(float Amount)
+{
+	if (Health + Amount >= MaxHealth)
+	{
+		Health = MaxHealth;
+	}
+	else
+	{
+		Health += Amount;
+	}
+}
+
 void AMain::Die()
 {
 	if (MovementStatus == EMovementStatus::EMS_Dead) return; //check Main is not already in the middle of dying before proceeding

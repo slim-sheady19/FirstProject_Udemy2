@@ -10,7 +10,7 @@
 
 APickup::APickup()
 {
-	CoinCount = 1;
+
 }
 
 void APickup::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -23,7 +23,7 @@ void APickup::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* O
 		AMain* Main = Cast<AMain>(OtherActor);
 		if (Main)
 		{
-			Main->IncrementCoins(CoinCount);
+			OnPickupBP(Main);
 			//once we know it is Main overlapping, spawn the PFX and SFX
 			if (OverlapParticles) //check to make sure OverlapParticles is not null
 			{
@@ -42,6 +42,4 @@ void APickup::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* O
 void APickup::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	Super::OnOverlapEnd(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
-
-	UE_LOG(LogTemp, Warning, TEXT("Pickup::OnOverlapEnd()"));
 }

@@ -144,7 +144,11 @@ public:
 	//Inherited (from Actor class) function TakeDamage that returns float with function signature copied from UE4 documentation
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
 
+	UFUNCTION(BlueprintCallable)
 	void IncrementCoins(int32 Amount);
+
+	UFUNCTION(BlueprintCallable)
+	void IncrementHealth(float Amount);
 
 	void Die();
 
