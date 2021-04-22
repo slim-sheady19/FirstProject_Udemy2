@@ -551,3 +551,20 @@ void AMain::UpdateCombatTarget()
 		bHasCombatTarget = true;
 	}
 }
+
+void AMain::SwitchLevel(FName LevelName)
+{
+	//Create local variable of type UWorld called World by calling GetWorld so we can get to GetMapName
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		FString CurrentLevel = World->GetMapName();  //create variable of type FString called CurrentLevel because GetMapName returns an FString
+
+		FName CurrentLevelName(*CurrentLevel); //Initialize FName CurrentLevelName using FString literal (* = dereference operator) from CurrentLevel
+		if (CurrentLevelName != LevelName) //ensure Current level and next level to transition to are not the same
+		{
+			UGameplayStatics::OpenLevel(World, LevelName);
+		}
+	}
+}
+
