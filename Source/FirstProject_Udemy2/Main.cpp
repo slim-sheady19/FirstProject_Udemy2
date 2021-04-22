@@ -17,6 +17,7 @@
 #include "Enemy.h"
 #include "MainPlayerController.h"
 #include "FirstSaveGame.h"
+#include "ItemStorage.h"
 
 // Sets default values
 AMain::AMain()
@@ -584,6 +585,11 @@ void AMain::SaveGame()
 	SaveGameInstance->CharacterStats.MaxStamina = MaxStamina;
 	SaveGameInstance->CharacterStats.Coins = Coins;
 
+	if (EquippedWeapon)
+	{
+		SaveGameInstance->CharacterStats.WeaponName = EquippedWeapon->Name; //Get the WeaponName's string and save in SaveGameInstance WeaponName (so we can have a default value upon load)
+	}
+
 	SaveGameInstance->CharacterStats.Location = GetActorLocation();
 	SaveGameInstance->CharacterStats.Rotation = GetActorRotation();
 
@@ -609,6 +615,28 @@ void AMain::LoadGame(bool SetPosition)
 	Stamina = LoadGameInstance->CharacterStats.Stamina;
 	MaxStamina = LoadGameInstance->CharacterStats.MaxStamina;
 	Coins = LoadGameInstance->CharacterStats.Coins;
+
+	//Retrieve weapon from SavedGame instance and equip
+	if (WeaponStorage)
+	{
+		//Spawn actor of type ItemStorage called Weapons
+		AItemStorage* Weapons = GetWorld()->SpawnActor<AItemStorage>(WeaponStorage); //WeaponStorage is stored on Main
+		if (Weapons) //Check if it's valid
+		{
+			//retreive WeaponName from SaveGameInstance and store in FString called WeaponName
+			FString WeaponName = LoadGameInstance->CharacterStats.WeaponName;
+
+			//put this check here so that we don't crash if the map does not contain a key called WeaponName.  similar to why we would crash if we tried to access 5th item in array of 4
+			if (Weapons->WeaponMap.Contains(WeaponName)) 
+			{
+				/*Take newly spawned actor ItemStorage, access its WeaponMap with WeaponName string we just retrieved. Returns a UClass which we pass in to SpawnActor to spawn a new Weapon based
+				* on that UClass and store in variable of type AWeapon called WeaponToEquip which we then call Equip on (from Weapon.h)
+				*/
+				AWeapon* WeaponToEquip = GetWorld()->SpawnActor<AWeapon>(Weapons->WeaponMap[WeaponName]); //Spawn the weapon
+				WeaponToEquip->Equip(this);
+			}
+		}
+	}
 
 	//if we want to set Main's position
 	if (SetPosition)

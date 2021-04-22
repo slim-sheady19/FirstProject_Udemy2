@@ -32,6 +32,8 @@ struct FCharacterStats //The F is a convention for structs in UE.
 	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
 	FRotator Rotation;
 
+	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
+	FString WeaponName;
 };
 
 /**
