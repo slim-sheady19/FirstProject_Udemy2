@@ -230,4 +230,10 @@ public:
 
 	//function SwitchLevel with input paramater LevelNAme
 	void SwitchLevel(FName LevelName);
+
+	UFUNCTION(BlueprintCallable)
+	void SaveGame();
+
+	UFUNCTION(BlueprintCallable)
+	void LoadGame(bool SetPosition); //bool SetPosition is for whether or not we want to load Main's position because sometimes we don't want to
 };

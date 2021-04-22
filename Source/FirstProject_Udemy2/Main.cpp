@@ -16,7 +16,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Enemy.h"
 #include "MainPlayerController.h"
-
+#include "FirstSaveGame.h"
 
 // Sets default values
 AMain::AMain()
@@ -568,3 +568,54 @@ void AMain::SwitchLevel(FName LevelName)
 	}
 }
 
+void AMain::SaveGame()
+{
+	UE_LOG(LogTemp, Warning, TEXT("SAVING GAME"));
+	/*
+	Passing in what is returned from StaticClass (UClass) to CreateSaveGameObject (from GameplayStatics) which returns object of type USaveGame and casts to UFirstSaveGame and stores it all in
+	SaveGameInstance so we have an instance of the SaveGame object
+	*/
+	UFirstSaveGame* SaveGameInstance = Cast<UFirstSaveGame>(UGameplayStatics::CreateSaveGameObject(UFirstSaveGame::StaticClass()));
+
+	//Next store the Main's stats in the SaveGame instance's corresponding variables
+	SaveGameInstance->CharacterStats.Health = Health;
+	SaveGameInstance->CharacterStats.MaxHealth = MaxHealth;
+	SaveGameInstance->CharacterStats.Stamina = Stamina;
+	SaveGameInstance->CharacterStats.MaxStamina = MaxStamina;
+	SaveGameInstance->CharacterStats.Coins = Coins;
+
+	SaveGameInstance->CharacterStats.Location = GetActorLocation();
+	SaveGameInstance->CharacterStats.Rotation = GetActorRotation();
+
+	//Use the SaveGame instance we have in memory as input to SaveGameToSlot
+	UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->PlayerName, SaveGameInstance->UserIndex);
+
+	UE_LOG(LogTemp, Warning, TEXT("GAME SAVED"));
+}
+
+void AMain::LoadGame(bool SetPosition)
+{
+	UE_LOG(LogTemp, Warning, TEXT("LOADING GAME"));
+
+	//Retrieve instance of type UFirstSaveGame
+	UFirstSaveGame* LoadGameInstance = Cast<UFirstSaveGame>(UGameplayStatics::CreateSaveGameObject(UFirstSaveGame::StaticClass()));
+
+	//Use LoadGameInstance as input for LoadGameFromSlot, then cast to UFirstSaveGame, then data returned overwrites LoadGameInstance.  (Compiler goes from right to left in this case)
+	LoadGameInstance = Cast<UFirstSaveGame>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->PlayerName, LoadGameInstance->UserIndex));
+
+	//Set Main's stats to those in the loaded game instance
+	Health = LoadGameInstance->CharacterStats.Health;
+	MaxHealth = LoadGameInstance->CharacterStats.MaxHealth;
+	Stamina = LoadGameInstance->CharacterStats.Stamina;
+	MaxStamina = LoadGameInstance->CharacterStats.MaxStamina;
+	Coins = LoadGameInstance->CharacterStats.Coins;
+
+	//if we want to set Main's position
+	if (SetPosition)
+	{
+		SetActorRotation(LoadGameInstance->CharacterStats.Rotation);
+		SetActorLocation(LoadGameInstance->CharacterStats.Location);
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("GAME LOADED"));
+}
