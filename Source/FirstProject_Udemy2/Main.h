@@ -175,8 +175,17 @@ public:
 	//Called for side to side input
 	void MoveRight(float Value);
 
+	//Called for yaw rotation
+	void Turn(float Value);
+
+	//Called for pitch rotation
+	void LookUp(float Value);
+
 	bool bMovingForward;
 	bool bMovingRight;
+
+	//create a function to freeze and un freeze movement during pause
+	bool CanMove(float Value); //boolean function CanMove that has to return float because it is reading axis values
 
 	//Called via input to turn at a given rate
 	//@param Rate This is a noramlized rate, i.e. 1.0 means 100% of desired turn rate

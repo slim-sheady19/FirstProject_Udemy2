@@ -254,8 +254,8 @@ void AMain::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAxis("MoveForward", this, &AMain::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AMain::MoveRight);
 
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis("Turn", this, &AMain::Turn);
+	PlayerInputComponent->BindAxis("LookUp", this, &AMain::LookUp);
 	PlayerInputComponent->BindAxis("TurnRate", this, &AMain::TurnAtRate);
 	PlayerInputComponent->BindAxis("LookUpRate", this, &AMain::LookUpAtRate);
 
@@ -263,12 +263,43 @@ void AMain::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction("ESC", IE_Released, this, &AMain::ESCUp);
 }
 
+bool AMain::CanMove(float Value)
+{
+	if (MainPlayerController) //first check is valid
+	{
+		return
+			(Value != 0.0f) && (!bAttacking) && //check Main is not standing still and not already attacking
+			(MovementStatus != EMovementStatus::EMS_Dead) && //check Main is not dead
+			!MainPlayerController->bPauseMenuVisible; //check we are not already in pause menu
+		//if all above checks suceed it will return true and Main can move
+	}
+	return false;
+	
+}
+
+void AMain::Turn(float Value)
+{
+	if (CanMove(Value))
+	{
+		AddControllerYawInput(Value);
+	}
+}
+
+void AMain::LookUp(float Value)
+{
+	if (CanMove(Value))
+	{
+		AddControllerPitchInput(Value);
+	}
+}
+
 void AMain::MoveForward(float Value)
 {
 	//Set MovingForward to false otherwise it will only ever stay on true.  before the next checks
 	bMovingForward = false;
-	////check for null pointer and need to make sure key is pressed so that we want to move forward (value != 0.0f). can't be attacking.  also check Main is not dead
-	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (MovementStatus != EMovementStatus::EMS_Dead))
+
+	//check we should be able to move (function above)
+	if (CanMove(Value))
 	{
 		//find out which way is forward 
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -287,8 +318,8 @@ void AMain::MoveRight(float Value)
 {
 	//Set MovingForward to false otherwise it will only ever stay on true.  before the next checks
 	bMovingRight = false;
-	//check for null pointer and need to make sure key is pressed so that we want to move forward (value != 0.0f). can't be attacking.  also check Main is not Dead
-	if ((Controller != nullptr) && (Value != 0.0f) && (!bAttacking) && (MovementStatus != EMovementStatus::EMS_Dead))
+	//check we should be able to move
+	if (CanMove(Value))
 	{
 		//find out which way is forward 
 		const FRotator Rotation = Controller->GetControlRotation();
@@ -317,21 +348,23 @@ void AMain::LMBDown()
 {
 	bLMBDown = true;
 
-	if (MovementStatus == EMovementStatus::EMS_Dead) return;
+	if (MovementStatus == EMovementStatus::EMS_Dead) return; //check Main is not dead before continuing
 
-	if (ActiveOverlappingItem)
-	{
-		AWeapon* Weapon = Cast<AWeapon>(ActiveOverlappingItem); //Cast in to AWeapon, pass in OverLappingItem
-		if (Weapon) //check weapon is valid
+	if (MainPlayerController) if (MainPlayerController->bPauseMenuVisible) return; //check pause menu is not visible first
+	
+		if (ActiveOverlappingItem)
 		{
-			Weapon->Equip(this); //Call Equip inside Weapon
-			SetActiveOverlappingItem(nullptr);
+			AWeapon* Weapon = Cast<AWeapon>(ActiveOverlappingItem); //Cast in to AWeapon, pass in OverLappingItem
+			if (Weapon) //check weapon is valid
+			{
+				Weapon->Equip(this); //Call Equip inside Weapon
+				SetActiveOverlappingItem(nullptr);
+			}
 		}
-	}
-	else if (EquippedWeapon) //if LMB is down and we have a weapon equipped, it means we want to attack so call Attack function
-	{
-		Attack();
-	}
+		else if (EquippedWeapon) //if LMB is down and we have a weapon equipped, it means we want to attack so call Attack function
+		{
+			Attack();
+		}
 }
 
 void AMain::ESCDown()
@@ -391,6 +424,8 @@ void AMain::Die()
 
 void AMain::Jump()
 {
+	if (MainPlayerController) if (MainPlayerController->bPauseMenuVisible) return; //check pause menu is not visible first
+
 	if (MovementStatus != EMovementStatus::EMS_Dead)
 	{
 		ACharacter::Jump();
@@ -661,6 +696,11 @@ void AMain::LoadGame(bool SetPosition)
 		SetActorRotation(LoadGameInstance->CharacterStats.Rotation);
 		SetActorLocation(LoadGameInstance->CharacterStats.Location);
 	}
+
+	//Set movement status to normal when we are loading a game (useful for after death) and unfreeze the anims and skeleton
+	SetMovementStatus(EMovementStatus::EMS_Normal);
+	GetMesh()->bPauseAnims = false;
+	GetMesh()->bNoSkeletonUpdate = false;
 
 	//UE_LOG(LogTemp, Warning, TEXT("GAME LOADED"));
 }
