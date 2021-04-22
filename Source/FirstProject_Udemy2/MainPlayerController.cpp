@@ -108,6 +108,11 @@ void AMainPlayerController::DisplayPauseMenu_Implementation()
 		bPauseMenuVisible = true;
 		//Set pause menu to visible
 		PauseMenu->SetVisibility(ESlateVisibility::Visible);
+
+		//Create struct of type FInputModeUIOnly called the same, and pass in to SetInputMode()
+		FInputModeGameAndUI InputModeGameAndUI; 
+		SetInputMode(InputModeGameAndUI);
+		bShowMouseCursor = true;
 	}
 }
 
@@ -115,9 +120,12 @@ void AMainPlayerController::RemovePauseMenu_Implementation()
 {
 	if (PauseMenu)
 	{
+		//Create struct of type FInputModeGameOnly called the same, and pass in to SetInputMode()
+		FInputModeGameOnly InputModeGameOnly;
+		SetInputMode(InputModeGameOnly);
+		bShowMouseCursor = false;
+
 		bPauseMenuVisible = false;
-		//Set health bar to visible
-		PauseMenu->SetVisibility(ESlateVisibility::Hidden);
 	}
 }
 
