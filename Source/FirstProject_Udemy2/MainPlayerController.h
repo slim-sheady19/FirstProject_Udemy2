@@ -30,6 +30,24 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Widgets")
 	UUserWidget* EnemyHealthBar;
 
+	//Variable to hold the widget after creating it.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	UUserWidget* PauseMenu;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Widgets")
+	TSubclassOf<UUserWidget> WPauseMenu;
+
+	bool bPauseMenuVisible;
+
+	//functions to show or hide Pause Menu.  Note when you add the macro "BlueprintNativeEvent" you have to add _Implementation to the function in the cpp file
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "HUD")
+	void DisplayPauseMenu();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "HUD")
+	void RemovePauseMenu();
+
+	void TogglePauseMenu();
+
 	bool bEnemyHealthBarVisible;
 
 	//functions to show or hide enemy health bar

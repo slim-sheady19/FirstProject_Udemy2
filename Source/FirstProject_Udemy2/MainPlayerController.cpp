@@ -27,6 +27,16 @@ void AMainPlayerController::BeginPlay()
 		FVector2D Alignment(0.f, 0.f);
 		EnemyHealthBar->SetAlignmentInViewport(Alignment);
 	}
+
+	if (WPauseMenu)
+	{
+		PauseMenu = CreateWidget<UUserWidget>(this, WPauseMenu);
+		if (PauseMenu)
+		{
+			PauseMenu->AddToViewport();
+			PauseMenu->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
 }
 
 void AMainPlayerController::DisplayEnemyHealthBar()
@@ -68,9 +78,7 @@ void AMainPlayerController::Tick(float DeltaTime)
 		EnemyHealthBar->SetPositionInViewport(PositionInViewport);
 		EnemyHealthBar->SetDesiredSizeInViewport(SizeInViewport);
 	}
-}
-
-/*
+	/*
 DisplayEnemyHealthBar on MainPlayerController
 0
 Mushfiqur · Lecture 78
@@ -91,3 +99,37 @@ I have mainly seen HUD code in the PlayerController class, but I've also seen it
 
 Stephen
 */
+}
+
+void AMainPlayerController::DisplayPauseMenu_Implementation()
+{
+	if (PauseMenu)
+	{
+		bPauseMenuVisible = true;
+		//Set pause menu to visible
+		PauseMenu->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void AMainPlayerController::RemovePauseMenu_Implementation()
+{
+	if (PauseMenu)
+	{
+		bPauseMenuVisible = false;
+		//Set health bar to visible
+		PauseMenu->SetVisibility(ESlateVisibility::Hidden);
+	}
+}
+
+void AMainPlayerController::TogglePauseMenu()
+{
+	if (bPauseMenuVisible)
+	{
+		RemovePauseMenu(); //remove the _Implementation so that the BP function can be called (for animation in this case)
+	}
+	else
+	{
+		DisplayPauseMenu(); //remove the _Implementation so that the BP function can be called (for animation in this case)
+	}
+}
+
