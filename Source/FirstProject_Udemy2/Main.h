@@ -36,6 +36,10 @@ public:
 	// Sets default values for this character's properties
 	AMain();
 
+	//Give Main_BP ability to choose from dropdown a WeaponStorage BP to store in this TSubclass of called WeaponStorage
+	UPROPERTY(EditDefaultsOnly, Category = "SavedData")
+	TSubclassOf<class AItemStorage> WeaponStorage;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
 	bool bHasCombatTarget;
 

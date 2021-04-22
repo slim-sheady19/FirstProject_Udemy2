@@ -570,7 +570,7 @@ void AMain::SwitchLevel(FName LevelName)
 
 void AMain::SaveGame()
 {
-	UE_LOG(LogTemp, Warning, TEXT("SAVING GAME"));
+	//UE_LOG(LogTemp, Warning, TEXT("SAVING GAME"));
 	/*
 	Passing in what is returned from StaticClass (UClass) to CreateSaveGameObject (from GameplayStatics) which returns object of type USaveGame and casts to UFirstSaveGame and stores it all in
 	SaveGameInstance so we have an instance of the SaveGame object
@@ -590,12 +590,12 @@ void AMain::SaveGame()
 	//Use the SaveGame instance we have in memory as input to SaveGameToSlot
 	UGameplayStatics::SaveGameToSlot(SaveGameInstance, SaveGameInstance->PlayerName, SaveGameInstance->UserIndex);
 
-	UE_LOG(LogTemp, Warning, TEXT("GAME SAVED"));
+	//UE_LOG(LogTemp, Warning, TEXT("GAME SAVED"));
 }
 
 void AMain::LoadGame(bool SetPosition)
 {
-	UE_LOG(LogTemp, Warning, TEXT("LOADING GAME"));
+	//UE_LOG(LogTemp, Warning, TEXT("LOADING GAME"));
 
 	//Retrieve instance of type UFirstSaveGame
 	UFirstSaveGame* LoadGameInstance = Cast<UFirstSaveGame>(UGameplayStatics::CreateSaveGameObject(UFirstSaveGame::StaticClass()));
@@ -617,5 +617,5 @@ void AMain::LoadGame(bool SetPosition)
 		SetActorLocation(LoadGameInstance->CharacterStats.Location);
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("GAME LOADED"));
+	//UE_LOG(LogTemp, Warning, TEXT("GAME LOADED"));
 }
