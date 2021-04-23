@@ -34,6 +34,9 @@ struct FCharacterStats //The F is a convention for structs in UE.
 
 	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
 	FString WeaponName;
+
+	UPROPERTY(VisibleAnywhere, Category = "SaveGameData")
+	FString LevelName;
 };
 
 /**

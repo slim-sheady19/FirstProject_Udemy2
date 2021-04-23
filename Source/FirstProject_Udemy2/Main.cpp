@@ -92,6 +92,15 @@ void AMain::BeginPlay()
 	Super::BeginPlay();
 
 	MainPlayerController = Cast<AMainPlayerController>(GetController());
+
+	FString Map = GetWorld()->GetMapName();
+	Map.RemoveFromStart(GetWorld()->StreamingLevelsPrefix);
+
+	// only load game if we are not in sun temple - if we are in sun temple the idea is to restart
+	if (Map != "SunTemple")
+	{
+		LoadGameNoSwitch();
+	}
 }
 
 // Called every frame
@@ -637,6 +646,11 @@ void AMain::SaveGame()
 	SaveGameInstance->CharacterStats.MaxStamina = MaxStamina;
 	SaveGameInstance->CharacterStats.Coins = Coins;
 
+	FString MapName = GetWorld()->GetMapName(); // get map name and store in FString variable MapName
+	MapName.RemoveFromStart(GetWorld()->StreamingLevelsPrefix); //Editor puts a "UIE" prefix in front of the map name, use this function to remove it before saving
+
+	SaveGameInstance->CharacterStats.LevelName = MapName;
+
 	if (EquippedWeapon)
 	{
 		SaveGameInstance->CharacterStats.WeaponName = EquippedWeapon->Name; //Get the WeaponName's string and save in SaveGameInstance WeaponName (so we can have a default value upon load)
@@ -703,4 +717,53 @@ void AMain::LoadGame(bool SetPosition)
 	GetMesh()->bNoSkeletonUpdate = false;
 
 	//UE_LOG(LogTemp, Warning, TEXT("GAME LOADED"));
+
+	if (LoadGameInstance->CharacterStats.LevelName != TEXT(""))
+	{
+		FName LevelName(*LoadGameInstance->CharacterStats.LevelName); //using the dereference operator * we can pass an FString into the variable for LevelName which requires FName
+		SwitchLevel(LevelName);
+	}
+}
+
+void AMain::LoadGameNoSwitch()
+{
+	//Retrieve instance of type UFirstSaveGame
+	UFirstSaveGame* LoadGameInstance = Cast<UFirstSaveGame>(UGameplayStatics::CreateSaveGameObject(UFirstSaveGame::StaticClass()));
+
+	//Use LoadGameInstance as input for LoadGameFromSlot, then cast to UFirstSaveGame, then data returned overwrites LoadGameInstance.  (Compiler goes from right to left in this case)
+	LoadGameInstance = Cast<UFirstSaveGame>(UGameplayStatics::LoadGameFromSlot(LoadGameInstance->PlayerName, LoadGameInstance->UserIndex));
+
+	//Set Main's stats to those in the loaded game instance
+	Health = LoadGameInstance->CharacterStats.Health;
+	MaxHealth = LoadGameInstance->CharacterStats.MaxHealth;
+	Stamina = LoadGameInstance->CharacterStats.Stamina;
+	MaxStamina = LoadGameInstance->CharacterStats.MaxStamina;
+	Coins = LoadGameInstance->CharacterStats.Coins;
+
+	//Retrieve weapon from SavedGame instance and equip
+	if (WeaponStorage)
+	{
+		//Spawn actor of type ItemStorage called Weapons
+		AItemStorage* Weapons = GetWorld()->SpawnActor<AItemStorage>(WeaponStorage); //WeaponStorage is stored on Main
+		if (Weapons) //Check if it's valid
+		{
+			//retreive WeaponName from SaveGameInstance and store in FString called WeaponName
+			FString WeaponName = LoadGameInstance->CharacterStats.WeaponName;
+
+			//put this check here so that we don't crash if the map does not contain a key called WeaponName.  similar to why we would crash if we tried to access 5th item in array of 4
+			if (Weapons->WeaponMap.Contains(WeaponName))
+			{
+				/*Take newly spawned actor ItemStorage, access its WeaponMap with WeaponName string we just retrieved. Returns a UClass which we pass in to SpawnActor to spawn a new Weapon based
+				* on that UClass and store in variable of type AWeapon called WeaponToEquip which we then call Equip on (from Weapon.h)
+				*/
+				AWeapon* WeaponToEquip = GetWorld()->SpawnActor<AWeapon>(Weapons->WeaponMap[WeaponName]); //Spawn the weapon
+				WeaponToEquip->Equip(this);
+			}
+		}
+	}
+
+	//Set movement status to normal when we are loading a game (useful for after death) and unfreeze the anims and skeleton
+	SetMovementStatus(EMovementStatus::EMS_Normal);
+	GetMesh()->bPauseAnims = false;
+	GetMesh()->bNoSkeletonUpdate = false;
 }

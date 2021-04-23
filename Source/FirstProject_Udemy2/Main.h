@@ -253,4 +253,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void LoadGame(bool SetPosition); //bool SetPosition is for whether or not we want to load Main's position because sometimes we don't want to
+
+	void LoadGameNoSwitch(); //same function as above without position (for loading in the )
 };
